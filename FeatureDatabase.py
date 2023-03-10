@@ -28,6 +28,7 @@ class FeatureDatabase:
         self.records = []
 
         self.featureExtractor = cv.SIFT_create()
+        self.matcher = cv.BFMatcher()
 
         self.octave_count = octave_count
         self.scale_levels = scale_levels
@@ -43,3 +44,25 @@ class FeatureDatabase:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
             self.records.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
+
+    def show_matches(self, images: List[ndarray]) -> None:
+        """
+        Performs SIFT key point extraction on the given images and then matches with all the records in the database,
+        showing the output in a window.
+
+        :param images: the images we are trying to compare against.
+        """
+        for image in images:
+            key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
+
+            for record in self.records:
+                matches = self.matcher.match(record.descriptors, descriptors)
+                matches = sorted(matches, key=lambda x: x.distance)
+
+                # 40 seems to be a good number of accurate matches.
+                i = cv.drawMatches(record.image, record.key_points, image, key_points, matches[:40], None,
+                                   flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+
+                cv.namedWindow("display")
+                cv.imshow("display", i)
+                cv.waitKey(0)
