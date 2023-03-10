@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple
 from numpy import ndarray
 import cv2 as cv
@@ -44,7 +45,6 @@ class FeatureDatabase:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
             self.records.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
-
     def show_matches(self, images: List[ndarray]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
@@ -55,12 +55,21 @@ class FeatureDatabase:
         for image in images:
             key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
 
+            imageMatches = []
+
             for record in self.records:
                 matches = self.matcher.match(record.descriptors, descriptors)
                 matches = sorted(matches, key=lambda x: x.distance)
 
-                # 40 seems to be a good number of accurate matches.
-                i = cv.drawMatches(record.image, record.key_points, image, key_points, matches[:40], None,
+                normalised_match_error = sum([match.distance for match in matches]) / len(matches)
+
+                imageMatches.append({"matches": matches, "error": normalised_match_error, "image": record})
+
+            imageMatches = sorted(imageMatches, key=lambda match: match["error"])
+
+            for count in range(5):
+                i = cv.drawMatches(imageMatches[count]["image"].image, imageMatches[count]["image"].key_points, image,
+                                   key_points, imageMatches[count]["matches"][:10], None,
                                    flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
                 cv.namedWindow("display")
