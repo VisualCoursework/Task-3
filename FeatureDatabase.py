@@ -29,7 +29,7 @@ class FeatureDatabase:
         self.records = []
 
         self.featureExtractor = cv.SIFT_create()
-        self.matcher = cv.BFMatcher()
+        self.matcher = cv.BFMatcher(crossCheck=True)
 
         self.octave_count = octave_count
         self.scale_levels = scale_levels
