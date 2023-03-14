@@ -67,7 +67,11 @@ class FeatureDatabase:
 
             imageMatches = sorted(imageMatches, key=lambda match: match["error"])
 
-            for count in range(5):
+            for count in range(len(imageMatches)):
+                if imageMatches[count]["error"] > 250:
+                    continue
+
+                print(imageMatches[count]["error"])
                 i = cv.drawMatches(imageMatches[count]["image"].image, imageMatches[count]["image"].key_points, image,
                                    key_points, imageMatches[count]["matches"][:10], None,
                                    flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
