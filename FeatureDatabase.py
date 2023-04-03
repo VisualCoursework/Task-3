@@ -1,6 +1,7 @@
 import math
 from typing import List, Tuple
 from numpy import ndarray
+import numpy as np
 import cv2 as cv
 
 
@@ -61,6 +62,9 @@ class FeatureDatabase:
 
         # Now match against all records in db
         for training_image in self.training_images:
+            # Note that the training and query images that OpenCV uses here are in the opposite order to the ones we are
+            # providing. The query image we have is the "training" image in the matcher, as that's the image being
+            # searched. The training images we have are being "queried".
             matches = self.matcher.match(training_image.descriptors, descriptors)
             matches = sorted(matches, key=lambda x: x.distance)
             normalised_match_error = sum([match.distance for match in matches]) / len(matches)
@@ -72,11 +76,29 @@ class FeatureDatabase:
             imageMatches.append({"matches": matches,
                                  "error": normalised_match_error,
                                  "training_image": training_image,
-                                 "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, training_image)})
+                                 "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, query_image)})
+
+            self.get_train_to_query_homography(imageMatches[-1])
 
         imageMatches = sorted(imageMatches, key=lambda match: match["error"])
 
         return imageMatches
+
+    def get_train_to_query_homography(self, match: dict) -> None:
+        """
+        Calculates the homography which maps the points in the training image onto the query image.
+
+        :return: the homography
+        """
+        MATCH_COUNT = 5
+
+        # Counter-intuitive that we are using the trainIdx for the query points and vice versa, but this is in fact
+        # correct. It's just a naming thing: we are calling the emoji the training images and the test images the query
+        # images, but from OpenCV's point of view, we are querying the test images with the emoji.
+        query_key_points = np.array([match["query_image"].key_points[m.trainIdx].pt for m in match["matches"][:MATCH_COUNT]])
+        train_key_points = np.array([match["training_image"].key_points[m.queryIdx].pt for m in match["matches"][:MATCH_COUNT]])
+
+        return cv.findHomography(train_key_points, query_key_points)
 
     def show_matches_for_images(self, images: list[ndarray]) -> None:
         """
@@ -94,7 +116,7 @@ class FeatureDatabase:
 
                 print(imageMatches[count]["error"])
                 i = cv.drawMatches(imageMatches[count]["training_image"].image, imageMatches[count]["training_image"].key_points, image,
-                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:10], None,
+                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:5], None,
                                    flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
                 cv.namedWindow("display")
