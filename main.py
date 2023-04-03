@@ -11,4 +11,5 @@ if __name__ == "__main__":
     db.add_training_images(trainingImages)
 
     testImages = [cv.imread("TestWithoutRotations/images/" + imagePath) for imagePath in os.listdir("TestWithoutRotations/images/")]
+    testImages += [cv.imread("Task3AdditionalTestDataset/images/" + imagePath) for imagePath in os.listdir("Task3AdditionalTestDataset/images/")]
     db.show_matches(testImages)
