@@ -115,8 +115,8 @@ class FeatureDatabase:
                 topLeft = tuple(cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0])
                 bottomRight = tuple(cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0])
 
-                topLeft = tuple(map(int, topLeft))
-                bottomRight = tuple(map(int, bottomRight))
+                topLeft = tuple(map(round, topLeft))
+                bottomRight = tuple(map(round, bottomRight))
 
                 # BGR colour space
                 cv.rectangle(image, topLeft, bottomRight, (0, 0, 255))
