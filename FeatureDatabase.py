@@ -53,9 +53,11 @@ class FeatureDatabase:
         :param image: the image to match.
         :return: the sorted matches.
         """
+        # First get the SIFT points on the input image
         key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
         imageMatches = []
 
+        # Now match against all records in db
         for record in self.records:
             matches = self.matcher.match(record.descriptors, descriptors)
             matches = sorted(matches, key=lambda x: x.distance)
