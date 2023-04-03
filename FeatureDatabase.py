@@ -45,6 +45,28 @@ class FeatureDatabase:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
             self.records.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
+    def get_image_matches(self, image):
+        """
+        Performs SIFT key point extraction on the given image and matches with all records in the database, returning
+        a list of match records, sorted by the "closeness" of the match.
+
+        :param image: the image to match.
+        :return: the sorted matches.
+        """
+        key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
+        imageMatches = []
+
+        for record in self.records:
+            matches = self.matcher.match(record.descriptors, descriptors)
+            matches = sorted(matches, key=lambda x: x.distance)
+            normalised_match_error = sum([match.distance for match in matches]) / len(matches)
+
+            imageMatches.append({"matches": matches, "error": normalised_match_error, "image": record})
+
+        imageMatches = sorted(imageMatches, key=lambda match: match["error"])
+
+        return imageMatches
+
     def show_matches(self, images: List[ndarray]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
@@ -53,19 +75,8 @@ class FeatureDatabase:
         :param images: the images we are trying to compare against.
         """
         for image in images:
-            key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
-
-            imageMatches = []
-
-            for record in self.records:
-                matches = self.matcher.match(record.descriptors, descriptors)
-                matches = sorted(matches, key=lambda x: x.distance)
-
-                normalised_match_error = sum([match.distance for match in matches]) / len(matches)
-
-                imageMatches.append({"matches": matches, "error": normalised_match_error, "image": record})
-
-            imageMatches = sorted(imageMatches, key=lambda match: match["error"])
+            key_points, _ = self.featureExtractor.detectAndCompute(image, None)
+            imageMatches = self.get_image_matches(image)
 
             for count in range(len(imageMatches)):
                 if imageMatches[count]["error"] > 250:
