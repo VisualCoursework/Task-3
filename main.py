@@ -12,5 +12,5 @@ if __name__ == "__main__":
 
     testImages = [(cv.imread("TestWithoutRotations/images/" + imagePath), imagePath) for imagePath in os.listdir("TestWithoutRotations/images/")]
     # testImages += [(cv.imread("Task3AdditionalTestDataset/images/" + imagePath), imagePath) for imagePath in os.listdir("Task3AdditionalTestDataset/images/")]
-    db.show_boxes_around_images(testImages)
+    db.print_annotations(testImages)
     # db.show_matches_for_images(testImages)

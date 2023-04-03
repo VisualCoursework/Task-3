@@ -120,6 +120,33 @@ class FeatureDatabase:
 
         return topLeft, bottomRight
 
+    def get_annotation_for_image(self, image: ndarray, name: str) -> str:
+        """
+        Returns the annotation for the given image
+
+        :param image: the ndarray representing the image
+        :param name: the name of the image
+        :return: the annotation for the image
+        """
+        matches = self.get_image_matches(image, name)
+
+        annotation = name + "\n"
+
+        for count, match in enumerate(matches):
+            annotation += f"{match['training_image'].ID}, {match['top_left']}, {match['bottom_right']} \n"
+
+        return annotation
+
+    def print_annotations(self, images: list[tuple[ndarray, str]]) -> None:
+        """
+        Gets the annotations for all of the given images and prints them to the console.
+
+        :param images: the images to annotate.
+        """
+
+        for image, name in images:
+            print(self.get_annotation_for_image(image, name))
+
     def show_boxes_around_images(self, images: list[tuple[ndarray, str]]) -> None:
         """
         For each image, finds all matches in this database which appear in the image, drawing a box around each one.
