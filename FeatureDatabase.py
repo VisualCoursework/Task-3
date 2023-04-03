@@ -81,6 +81,9 @@ class FeatureDatabase:
 
             homography, mask = self.get_train_to_query_homography(match)
             match["homography"] = homography
+            topLeft, bottomRight = self.calculate_bounding_box(match)
+            match["top_left"] = topLeft
+            match["bottom_right"] = bottomRight
             imageMatches.append(match)
 
         imageMatches = sorted(imageMatches, key=lambda match: match["error"])
@@ -101,6 +104,21 @@ class FeatureDatabase:
 
         return cv.findHomography(train_key_points, query_key_points, cv.RANSAC, 1)
 
+    def calculate_bounding_box(self, match: dict):
+        """
+        Calculates the bounding box for a match using its homography
+
+        :param match: the match to get the bounding box of
+        :return:
+        """
+        topLeft = cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
+        bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
+
+        topLeft = tuple(map(round, topLeft))
+        bottomRight = tuple(map(round, bottomRight))
+
+        return topLeft, bottomRight
+
     def show_boxes_around_images(self, images: list[ndarray]) -> None:
         """
         For each image, finds all matches in this database which appear in the image, drawing a box around each one.
@@ -111,14 +129,8 @@ class FeatureDatabase:
             imageMatches = self.get_image_matches(image)
 
             for count, match in enumerate(imageMatches):
-                topLeft = cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
-                bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
-
-                topLeft = tuple(map(round, topLeft))
-                bottomRight = tuple(map(round, bottomRight))
-
                 # BGR colour space
-                cv.rectangle(image, topLeft, bottomRight, (0, 0, 255))
+                cv.rectangle(image, match["top_left"], match["bottom_right"], (0, 0, 255))
 
                 i = cv.drawMatches(imageMatches[count]["training_image"].image,
                                    imageMatches[count]["training_image"].key_points, image,
