@@ -12,4 +12,4 @@ if __name__ == "__main__":
 
     testImages = [cv.imread("TestWithoutRotations/images/" + imagePath) for imagePath in os.listdir("TestWithoutRotations/images/")]
     testImages += [cv.imread("Task3AdditionalTestDataset/images/" + imagePath) for imagePath in os.listdir("Task3AdditionalTestDataset/images/")]
-    db.show_matches(testImages)
+    db.show_matches_for_images(testImages)

@@ -20,7 +20,7 @@ class FeatureDatabase:
             self.descriptors = descriptors
             self.image = image
 
-    def __init__(self, octave_count: int, scale_levels: int):
+    def __init__(self, octave_count: int, scale_levels: int, match_threshold: int = 250):
         """
         Construct the database
         :param octave_count:
@@ -34,6 +34,8 @@ class FeatureDatabase:
         self.octave_count = octave_count
         self.scale_levels = scale_levels
 
+        self.MATCH_THRESHOLD = match_threshold
+
     def add_training_images(self, images: List[Tuple[ndarray, str]]) -> None:
         """
         Accepts a list of images or image filepaths and performs SIFT feature extraction to find points. Stores this
@@ -45,7 +47,7 @@ class FeatureDatabase:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
             self.records.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
-    def get_image_matches(self, image):
+    def get_image_matches(self, image: ndarray) -> list[dict]:
         """
         Performs SIFT key point extraction on the given image and matches with all records in the database, returning
         a list of match records, sorted by the "closeness" of the match.
@@ -69,7 +71,7 @@ class FeatureDatabase:
 
         return imageMatches
 
-    def show_matches(self, images: List[ndarray]) -> None:
+    def show_matches_for_images(self, images: List[ndarray]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
         showing the output in a window.
@@ -81,7 +83,7 @@ class FeatureDatabase:
             imageMatches = self.get_image_matches(image)
 
             for count in range(len(imageMatches)):
-                if imageMatches[count]["error"] > 250:
+                if imageMatches[count]["error"] > self.MATCH_THRESHOLD:
                     continue
 
                 print(imageMatches[count]["error"])
