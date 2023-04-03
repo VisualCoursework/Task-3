@@ -102,6 +102,41 @@ class FeatureDatabase:
 
         return cv.findHomography(train_key_points, query_key_points)
 
+    def show_boxes_around_images(self, images: list[ndarray]) -> None:
+        """
+        For each image, finds all matches in this database which appear in the image, drawing a box around each one.
+
+        :param images: the images to search.
+        """
+        for image in images:
+            imageMatches = self.get_image_matches(image)
+
+            for count, match in enumerate(imageMatches):
+                topLeft = tuple(cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0])
+                bottomRight = tuple(cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0])
+
+                topLeft = tuple(map(int, topLeft))
+                bottomRight = tuple(map(int, bottomRight))
+
+                # BGR colour space
+                cv.rectangle(image, topLeft, bottomRight, (0, 0, 255))
+
+                i = cv.drawMatches(imageMatches[count]["training_image"].image,
+                                   imageMatches[count]["training_image"].key_points, image,
+                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:5],
+                                   None,
+                                   flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+
+                cv.namedWindow("search")
+                cv.namedWindow("found")
+                cv.namedWindow("display")
+
+                cv.imshow("search", match["query_image"].image)
+                cv.imshow("found", match["training_image"].image)
+                cv.imshow("display", i)
+
+                cv.waitKey(0)
+
     def show_matches_for_images(self, images: list[ndarray]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
