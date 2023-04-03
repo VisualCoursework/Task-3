@@ -36,6 +36,7 @@ class FeatureDatabase:
         self.scale_levels = scale_levels
 
         self.MATCH_THRESHOLD = match_threshold
+        self.POINT_MATCH_COUNT = 15
 
     def add_training_images(self, images: List[Tuple[ndarray, str]]) -> None:
         """
@@ -92,15 +93,13 @@ class FeatureDatabase:
 
         :return: the homography
         """
-        MATCH_COUNT = 5
-
         # Counter-intuitive that we are using the trainIdx for the query points and vice versa, but this is in fact
         # correct. It's just a naming thing: we are calling the emoji the training images and the test images the query
         # images, but from OpenCV's point of view, we are querying the test images with the emoji.
-        query_key_points = np.array([match["query_image"].key_points[m.trainIdx].pt for m in match["matches"][:MATCH_COUNT]])
-        train_key_points = np.array([match["training_image"].key_points[m.queryIdx].pt for m in match["matches"][:MATCH_COUNT]])
+        query_key_points = np.array([match["query_image"].key_points[m.trainIdx].pt for m in match["matches"][:self.POINT_MATCH_COUNT]])
+        train_key_points = np.array([match["training_image"].key_points[m.queryIdx].pt for m in match["matches"][:self.POINT_MATCH_COUNT]])
 
-        return cv.findHomography(train_key_points, query_key_points)
+        return cv.findHomography(train_key_points, query_key_points, cv.RANSAC, 1)
 
     def show_boxes_around_images(self, images: list[ndarray]) -> None:
         """
@@ -112,8 +111,8 @@ class FeatureDatabase:
             imageMatches = self.get_image_matches(image)
 
             for count, match in enumerate(imageMatches):
-                topLeft = tuple(cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0])
-                bottomRight = tuple(cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0])
+                topLeft = cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
+                bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
 
                 topLeft = tuple(map(round, topLeft))
                 bottomRight = tuple(map(round, bottomRight))
@@ -123,7 +122,7 @@ class FeatureDatabase:
 
                 i = cv.drawMatches(imageMatches[count]["training_image"].image,
                                    imageMatches[count]["training_image"].key_points, image,
-                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:5],
+                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:self.POINT_MATCH_COUNT],
                                    None,
                                    flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
