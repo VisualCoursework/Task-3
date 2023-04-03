@@ -73,18 +73,20 @@ class FeatureDatabase:
             if normalised_match_error > self.MATCH_THRESHOLD:
                 continue
 
-            imageMatches.append({"matches": matches,
-                                 "error": normalised_match_error,
-                                 "training_image": training_image,
-                                 "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, query_image)})
+            match = {"matches": matches,
+                     "error": normalised_match_error,
+                     "training_image": training_image,
+                     "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, query_image)}
 
-            self.get_train_to_query_homography(imageMatches[-1])
+            homography, mask = self.get_train_to_query_homography(match)
+            match["homography"] = homography
+            imageMatches.append(match)
 
         imageMatches = sorted(imageMatches, key=lambda match: match["error"])
 
         return imageMatches
 
-    def get_train_to_query_homography(self, match: dict) -> None:
+    def get_train_to_query_homography(self, match: dict) -> tuple:
         """
         Calculates the homography which maps the points in the training image onto the query image.
 
