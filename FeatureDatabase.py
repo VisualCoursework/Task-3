@@ -26,7 +26,7 @@ class FeatureDatabase:
         :param octave_count:
         :param scale_levels:
         """
-        self.records = []
+        self.training_images = []
 
         self.featureExtractor = cv.SIFT_create()
         self.matcher = cv.BFMatcher(crossCheck=True)
@@ -45,33 +45,40 @@ class FeatureDatabase:
         """
         for image, name in images:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
-            self.records.append(self.DatabaseRecord(name, keypoints, descriptors, image))
+            self.training_images.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
-    def get_image_matches(self, image: ndarray) -> list[dict]:
+    def get_image_matches(self, query_image: ndarray) -> list[dict]:
         """
         Performs SIFT key point extraction on the given image and matches with all records in the database, returning
         a list of match records, sorted by the "closeness" of the match.
 
-        :param image: the image to match.
+        :param query_image: the image to match.
         :return: the sorted matches.
         """
         # First get the SIFT points on the input image
-        key_points, descriptors = self.featureExtractor.detectAndCompute(image, None)
+        key_points, descriptors = self.featureExtractor.detectAndCompute(query_image, None)
         imageMatches = []
 
         # Now match against all records in db
-        for record in self.records:
-            matches = self.matcher.match(record.descriptors, descriptors)
+        for training_image in self.training_images:
+            matches = self.matcher.match(training_image.descriptors, descriptors)
             matches = sorted(matches, key=lambda x: x.distance)
             normalised_match_error = sum([match.distance for match in matches]) / len(matches)
 
-            imageMatches.append({"matches": matches, "error": normalised_match_error, "image": record})
+            # Reject if the match error is higher than the threshold.
+            if normalised_match_error > self.MATCH_THRESHOLD:
+                continue
+
+            imageMatches.append({"matches": matches,
+                                 "error": normalised_match_error,
+                                 "training_image": training_image,
+                                 "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, training_image)})
 
         imageMatches = sorted(imageMatches, key=lambda match: match["error"])
 
         return imageMatches
 
-    def show_matches_for_images(self, images: List[ndarray]) -> None:
+    def show_matches_for_images(self, images: list[ndarray]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
         showing the output in a window.
