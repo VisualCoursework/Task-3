@@ -49,12 +49,13 @@ class FeatureDatabase:
             keypoints, descriptors = self.featureExtractor.detectAndCompute(image, None)
             self.training_images.append(self.DatabaseRecord(name, keypoints, descriptors, image))
 
-    def get_image_matches(self, query_image: ndarray) -> list[dict]:
+    def get_image_matches(self, query_image: ndarray, image_name: str) -> list[dict]:
         """
         Performs SIFT key point extraction on the given image and matches with all records in the database, returning
         a list of match records, sorted by the "closeness" of the match.
 
         :param query_image: the image to match.
+        :param image_name: the name of the image.
         :return: the sorted matches.
         """
         # First get the SIFT points on the input image
@@ -77,7 +78,7 @@ class FeatureDatabase:
             match = {"matches": matches,
                      "error": normalised_match_error,
                      "training_image": training_image,
-                     "query_image": self.DatabaseRecord("placeholder", key_points, descriptors, query_image)}
+                     "query_image": self.DatabaseRecord(image_name, key_points, descriptors, query_image)}
 
             homography, mask = self.get_train_to_query_homography(match)
             match["homography"] = homography
@@ -119,14 +120,14 @@ class FeatureDatabase:
 
         return topLeft, bottomRight
 
-    def show_boxes_around_images(self, images: list[ndarray]) -> None:
+    def show_boxes_around_images(self, images: list[tuple[ndarray, str]]) -> None:
         """
         For each image, finds all matches in this database which appear in the image, drawing a box around each one.
 
         :param images: the images to search.
         """
-        for image in images:
-            imageMatches = self.get_image_matches(image)
+        for image, name in images:
+            imageMatches = self.get_image_matches(image, name)
 
             for count, match in enumerate(imageMatches):
                 # BGR colour space
@@ -148,15 +149,15 @@ class FeatureDatabase:
 
                 cv.waitKey(0)
 
-    def show_matches_for_images(self, images: list[ndarray]) -> None:
+    def show_matches_for_images(self, images: list[tuple[ndarray, str]]) -> None:
         """
         Performs SIFT key point extraction on the given images and then matches with all the records in the database,
         showing the output in a window.
 
         :param images: the images we are trying to compare against.
         """
-        for image in images:
-            imageMatches = self.get_image_matches(image)
+        for image, name in images:
+            imageMatches = self.get_image_matches(image, name)
 
             for count in range(len(imageMatches)):
                 if imageMatches[count]["error"] > self.MATCH_THRESHOLD:
