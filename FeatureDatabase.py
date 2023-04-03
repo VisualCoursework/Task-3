@@ -86,7 +86,6 @@ class FeatureDatabase:
         :param images: the images we are trying to compare against.
         """
         for image in images:
-            key_points, _ = self.featureExtractor.detectAndCompute(image, None)
             imageMatches = self.get_image_matches(image)
 
             for count in range(len(imageMatches)):
@@ -94,8 +93,8 @@ class FeatureDatabase:
                     continue
 
                 print(imageMatches[count]["error"])
-                i = cv.drawMatches(imageMatches[count]["image"].image, imageMatches[count]["image"].key_points, image,
-                                   key_points, imageMatches[count]["matches"][:10], None,
+                i = cv.drawMatches(imageMatches[count]["training_image"].image, imageMatches[count]["training_image"].key_points, image,
+                                   imageMatches[count]["query_image"].key_points, imageMatches[count]["matches"][:10], None,
                                    flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
                 cv.namedWindow("display")
