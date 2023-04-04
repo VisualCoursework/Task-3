@@ -11,15 +11,11 @@ def get_image_name_from_file_name(filename: str) -> str:
     :param filename: the name of the image's file
     :return: the image name
     """
-    print(filename)
-
     split = re.split(r'\.|-', filename)
 
     if len(split) > 2:
         image_name = functools.reduce(lambda a, b: a + "-" + b, split[1:len(split) - 1])
     else:
         image_name = split[0]
-
-    print(image_name)
 
     return image_name
