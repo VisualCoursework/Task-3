@@ -127,7 +127,7 @@ class FeatureDatabase:
         """
         matches = self.get_image_matches(image, name)
 
-        annotation = name + "\n"
+        annotation = ""
 
         for count, match in enumerate(matches):
             annotation += f"{match['training_image'].ID}, {match['top_left']}, {match['bottom_right']} \n"
