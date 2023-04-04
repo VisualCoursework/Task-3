@@ -21,22 +21,19 @@ class FeatureDatabase:
             self.descriptors = descriptors
             self.image = image
 
-    def __init__(self, octave_count: int, scale_levels: int, match_threshold: int = 250):
+    def __init__(self, octave_layers: int, match_threshold: int = 250, points_to_match: int = 15):
         """
         Construct the database
-        :param octave_count:
-        :param scale_levels:
+        :param octave_layers: the number of layers to use in each octave of the Gaussian pyramid.
         """
         self.training_images = []
 
-        self.featureExtractor = cv.SIFT_create()
+        self.featureExtractor = cv.SIFT_create(nOctaveLayers=octave_layers)
         self.matcher = cv.BFMatcher(crossCheck=True)
 
-        self.octave_count = octave_count
-        self.scale_levels = scale_levels
-
+        self.OCTAVE_LAYERS = octave_layers
         self.MATCH_THRESHOLD = match_threshold
-        self.POINT_MATCH_COUNT = 15
+        self.POINT_MATCH_COUNT = points_to_match
 
     def add_training_images(self, images: List[Tuple[ndarray, str]]) -> None:
         """
