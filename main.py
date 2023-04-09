@@ -32,7 +32,7 @@ if __name__ == "__main__":
         with open(f"TestWithoutRotations/annotations/{name}.txt") as f:
             actual_annotations.append(f.read())
 
-        # Calcualte the annotation for the image based on the training data
+        # Calculate the annotation for the image based on the training data
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
         evaluation = utils.evaluate_annotation([predicted_annotations[-1]], [actual_annotations[-1]])
