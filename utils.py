@@ -1,8 +1,6 @@
 import functools
 import re
 
-IOU_THRESHOLD = 0.8
-
 def convert_annotation_to_dict(annotation: str) -> dict:
     """
     Converts the given annotation (in the format that is being used for this assignment) into a dictionary of
@@ -28,27 +26,25 @@ def convert_annotation_to_dict(annotation: str) -> dict:
 
     return output
 
-def evaluate_annotation(predicted: str, actual: str) -> dict:
-    """
-    Creates an evaluation dictionary for the two given annotations.
 
-    :param predicted: the annotation produced by the model.
-    :param actual: the correct annotation.
-    :return: the evaluation.
+def evaluate_single_annotation(predicted: str, actual: str, IoU_threshold: float) -> tuple:
     """
-    evaluation = {
-        "FPR": 0,
-        "TPR": 0,
-        "IoU": 0
-    }
+    Evaluates a single annotation, returning the number of false positives and true positives.
 
+    :param predicted: the predicted annotation.
+    :param actual: the ground truth annotation.
+    :param IoU_threshold: the IoU threshold to use.
+    :return: the number of false positives and true positives, as a tuple.
+    """
     predicted = convert_annotation_to_dict(predicted)
     actual = convert_annotation_to_dict(actual)
+
+    FPR = TPR = 0
 
     for name, points in predicted.items():
         # First handle the false positives which aren't even in the ground truth.
         if name not in actual:
-            evaluation["FPR"] += 1
+            FPR += 1
         else:
             # Now handle the false positives which are in the ground truth, but are not a good match (according to the
             # IoU).
@@ -66,16 +62,40 @@ def evaluate_annotation(predicted: str, actual: str) -> dict:
             iou = interArea / float(predicted_box_area + actual_box_area - interArea)
 
             # If the IoU exceeds a threshold, then it is a true positive. Otherwise, we classify as a false positive.
-            if iou > IOU_THRESHOLD:
-                evaluation["TPR"] += 1
-                evaluation["IoU"] += iou  # Add the IoU to the total for the average.
+            if iou > IoU_threshold:
+                TPR += 1
             else:
-                evaluation["FPR"] += 1
+                FPR += 1
 
-    evaluation["FNR"] = len(actual) - evaluation["TPR"]  # False negatives are any which are missed.
-    evaluation["TNR"] = 50 - len(predicted)
+    FNR = len(actual) - TPR  # False negatives are any which are missed.
+    TNR = 50 - FPR  # True negatives are any which are not predicted. 50 is used as there are 50 images in the training set.
+
+    return FPR, TPR, FNR, TNR
+
+
+def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
+    """
+    Creates an evaluation dictionary for the two given annotations.
+
+    :param predicted: the annotation produced by the model.
+    :param actual: the correct annotation.
+    :return: the evaluation.
+    """
+    evaluation = {
+        "FPR": 0,
+        "TPR": 0,
+        "FNR": 0,
+        "TNR": 0
+    }
+
+    for predicted, actual in zip(predicted, actual):
+        FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, 0.9)
+        evaluation["FPR"] += FPR
+        evaluation["TPR"] += TPR
+        evaluation["FNR"] += FNR
+        evaluation["TNR"] += TNR
+
     evaluation["ACC"] = (evaluation["TPR"] + evaluation["TNR"]) / (evaluation["TPR"] + evaluation["TNR"] + evaluation["FPR"] + evaluation["FNR"])
-    evaluation["IoU"] /= evaluation["TPR"]
     evaluation["precision"] = evaluation["TPR"] / (evaluation["TPR"] + evaluation["FPR"])
     evaluation["recall"] = evaluation["TPR"] / (evaluation["TPR"] + evaluation["FNR"])
 

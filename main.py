@@ -23,17 +23,21 @@ if __name__ == "__main__":
     db = FeatureDatabase(OCTAVE_LAYERS, MATCH_THRESHOLD, POINTS_TO_MATCH)
     db.add_training_images(trainingImages)
 
+    predicted_annotations = []
+    actual_annotations = []
+
     # Now perform analysis of the test images.
     for image, name in testImagesNoRotation:
         # Read in the annotation for this test image
         with open(f"TestWithoutRotations/annotations/{name}.txt") as f:
-            actual_annotation = f.read()
+            actual_annotations.append(f.read())
 
         # Calcualte the annotation for the image based on the training data
-        predicted_annotation = db.get_annotation_for_image(image, name)
+        predicted_annotations.append(db.get_annotation_for_image(image, name))
 
-        # Output the evaluation for this annotation.
-        evaluation = utils.evaluate_annotation(predicted_annotation, actual_annotation)
+        evaluation = utils.evaluate_annotation([predicted_annotations[-1]], [actual_annotations[-1]])
         print(evaluation)
 
-        # db.show_boxes_around_images([(image, name)])
+    # Output the evaluation for this annotation.
+    evaluation = utils.evaluate_annotation(predicted_annotations, actual_annotations)
+    print(evaluation)
