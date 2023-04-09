@@ -36,6 +36,8 @@ if __name__ == "__main__":
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
         evaluation = utils.evaluate_annotation([predicted_annotations[-1]], [actual_annotations[-1]])
+
+        db.show_boxes_around_images([(image, name)])
         print(evaluation)
 
     # Output the evaluation for this annotation.

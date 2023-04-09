@@ -168,6 +168,7 @@ class FeatureDatabase:
                 print(points)
 
                 image = cv.polylines(image, [points], True, (0, 0, 0), 2)
+                cv.putText(image, match["training_image"].ID, (match["top_left"][0], match["top_left"][1] - 3) , cv.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
 
                 i = cv.drawMatches(imageMatches[count]["training_image"].image,
                                    imageMatches[count]["training_image"].key_points, image,
