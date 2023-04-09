@@ -79,8 +79,10 @@ class FeatureDatabase:
 
             homography, mask = self.get_train_to_query_homography(match)
             match["homography"] = homography
-            topLeft, bottomRight = self.calculate_bounding_box(match)
+            topLeft, topRight, bottomLeft, bottomRight = self.calculate_bounding_box(match)
             match["top_left"] = topLeft
+            match["top_right"] = topRight
+            match["bottom_left"] = bottomLeft
             match["bottom_right"] = bottomRight
             imageMatches.append(match)
 
@@ -104,18 +106,23 @@ class FeatureDatabase:
 
     def calculate_bounding_box(self, match: dict):
         """
-        Calculates the bounding box for a match using its homography
+        Calculates the bounding box for a match using its homography.
 
-        :param match: the match to get the bounding box of
-        :return:
+        :param match: the match to get the bounding box of.
+        :return: the vertices of the bounding box.
         """
         topLeft = cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
+        topRight = cv.perspectiveTransform(np.float32([511, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
+        bottomLeft = cv.perspectiveTransform(np.float32([0, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
         bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
 
+
         topLeft = tuple(map(round, topLeft))
+        topRight = tuple(map(round, topRight))
+        bottomLeft = tuple(map(round, bottomLeft))
         bottomRight = tuple(map(round, bottomRight))
 
-        return topLeft, bottomRight
+        return topLeft, topRight, bottomLeft, bottomRight
 
     def get_annotation_for_image(self, image: ndarray, name: str) -> str:
         """
@@ -155,7 +162,12 @@ class FeatureDatabase:
 
             for count, match in enumerate(imageMatches):
                 # BGR colour space
-                cv.rectangle(image, match["top_left"], match["bottom_right"], (0, 0, 255))
+
+                points = list(map(lambda x: [float(x[0]), float(x[1])], [match["top_left"], match["top_right"], match["bottom_right"], match["bottom_left"]]))
+                points = np.array(points, dtype=np.int32)
+                print(points)
+
+                image = cv.polylines(image, [points], True, (0, 0, 0), 2)
 
                 i = cv.drawMatches(imageMatches[count]["training_image"].image,
                                    imageMatches[count]["training_image"].key_points, image,

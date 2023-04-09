@@ -68,7 +68,7 @@ def evaluate_single_annotation(predicted: str, actual: str, IoU_threshold: float
                 FPR += 1
 
     FNR = len(actual) - TPR  # False negatives are any which are missed.
-    TNR = 50 - FPR  # True negatives are any which are not predicted. 50 is used as there are 50 images in the training set.
+    TNR = 50 - (FPR + TPR)  # True negatives are any which are not predicted. 50 is used as there are 50 images in the training set.
 
     return FPR, TPR, FNR, TNR
 
@@ -90,7 +90,7 @@ def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
 
     # Iterate over the predicted and actual annotations, and evaluate each one.
     for predicted, actual in zip(predicted, actual):
-        FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, 0.9)
+        FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, 0.5)
         evaluation["FPR"] += FPR
         evaluation["TPR"] += TPR
         evaluation["FNR"] += FNR
