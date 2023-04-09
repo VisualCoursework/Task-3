@@ -116,7 +116,6 @@ class FeatureDatabase:
         bottomLeft = cv.perspectiveTransform(np.float32([0, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
         bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
 
-
         topLeft = tuple(map(round, topLeft))
         topRight = tuple(map(round, topRight))
         bottomLeft = tuple(map(round, bottomLeft))
@@ -140,16 +139,6 @@ class FeatureDatabase:
             annotation += f"{match['training_image'].ID}, {match['top_left']}, {match['bottom_right']} \n"
 
         return annotation
-
-    def print_annotations(self, images: list[tuple[ndarray, str]]) -> None:
-        """
-        Gets the annotations for all of the given images and prints them to the console.
-
-        :param images: the images to annotate.
-        """
-
-        for image, name in images:
-            print(self.get_annotation_for_image(image, name))
 
     def show_boxes_around_images(self, images: list[tuple[ndarray, str]]) -> None:
         """
