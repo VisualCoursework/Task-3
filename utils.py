@@ -34,7 +34,7 @@ def evaluate_single_annotation(predicted: str, actual: str, IoU_threshold: float
     :param predicted: the predicted annotation.
     :param actual: the ground truth annotation.
     :param IoU_threshold: the IoU threshold to use.
-    :return: the number of false positives and true positives, as a tuple.
+    :return: the number of false positives, true positives, false negatives and true negatives.
     """
     predicted = convert_annotation_to_dict(predicted)
     actual = convert_annotation_to_dict(actual)
@@ -88,6 +88,7 @@ def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
         "TNR": 0
     }
 
+    # Iterate over the predicted and actual annotations, and evaluate each one.
     for predicted, actual in zip(predicted, actual):
         FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, 0.9)
         evaluation["FPR"] += FPR
@@ -95,11 +96,13 @@ def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
         evaluation["FNR"] += FNR
         evaluation["TNR"] += TNR
 
+    # Calculate metrics for the given datasets.
     evaluation["ACC"] = (evaluation["TPR"] + evaluation["TNR"]) / (evaluation["TPR"] + evaluation["TNR"] + evaluation["FPR"] + evaluation["FNR"])
     evaluation["precision"] = evaluation["TPR"] / (evaluation["TPR"] + evaluation["FPR"])
     evaluation["recall"] = evaluation["TPR"] / (evaluation["TPR"] + evaluation["FNR"])
 
     return evaluation
+
 
 def get_image_name_from_file_name(filename: str) -> str:
     """
