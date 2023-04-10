@@ -73,12 +73,13 @@ def evaluate_single_annotation(predicted: str, actual: str, IoU_threshold: float
     return FPR, TPR, FNR, TNR
 
 
-def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
+def evaluate_annotation(predicted: list[str], actual: list[str], IoU_threshold: float) -> dict:
     """
     Creates an evaluation dictionary for the two given annotations.
 
     :param predicted: the annotation produced by the model.
     :param actual: the correct annotation.
+    :param IoU_threshold: the IoU threshold to use.
     :return: the evaluation.
     """
     evaluation = {
@@ -90,7 +91,7 @@ def evaluate_annotation(predicted: list[str], actual: list[str]) -> dict:
 
     # Iterate over the predicted and actual annotations, and evaluate each one.
     for predicted, actual in zip(predicted, actual):
-        FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, 0.5)
+        FPR, TPR, FNR, TNR = evaluate_single_annotation(predicted, actual, IoU_threshold)
         evaluation["FPR"] += FPR
         evaluation["TPR"] += TPR
         evaluation["FNR"] += FNR

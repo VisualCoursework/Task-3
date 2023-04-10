@@ -1,6 +1,7 @@
 import os
 import cv2 as cv
 import utils
+import matplotlib.pyplot as plt
 from FeatureDatabase import FeatureDatabase
 
 OCTAVE_LAYERS = 3
@@ -35,11 +36,21 @@ if __name__ == "__main__":
         # Calculate the annotation for the image based on the training data
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
-        evaluation = utils.evaluate_annotation([predicted_annotations[-1]], [actual_annotations[-1]])
+    # Now create a matplotlib plot of the results by varying the IoU threshold.
+    accuracies = []
+    thresholds = []
 
-        db.show_boxes_around_images([(image, name)])
-        print(evaluation)
+    for threshold_factor in [0.01 * x for x in range(1, 101)]:
+        accuracies.append(utils.evaluate_annotation(predicted_annotations, actual_annotations, threshold_factor)["recall"])
+        thresholds.append(threshold_factor)
 
-    # Output the evaluation for this annotation.
-    evaluation = utils.evaluate_annotation(predicted_annotations, actual_annotations)
-    print(evaluation)
+    # Plot recall vs threshold:
+    plt.plot(thresholds, accuracies)
+    plt.xlabel("IoU Threshold")
+    plt.ylabel("Recall")
+    plt.title("Recall vs IoU Threshold")
+    plt.show()
+
+    print(accuracies)
+    print(thresholds)
+
