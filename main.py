@@ -37,20 +37,20 @@ if __name__ == "__main__":
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
     # Now create a matplotlib plot of the results by varying the IoU threshold.
-    accuracies = []
+    recalls = []
     thresholds = []
 
     for threshold_factor in [0.01 * x for x in range(1, 101)]:
-        accuracies.append(utils.evaluate_annotation(predicted_annotations, actual_annotations, threshold_factor)["recall"])
+        recalls.append(utils.evaluate_annotation(predicted_annotations, actual_annotations, threshold_factor)["recall"])
         thresholds.append(threshold_factor)
 
     # Plot recall vs threshold:
-    plt.plot(thresholds, accuracies)
+    plt.plot(thresholds, recalls)
     plt.xlabel("IoU Threshold")
     plt.ylabel("Recall")
     plt.title("Recall vs IoU Threshold")
     plt.show()
 
-    print(accuracies)
+    print(recalls)
     print(thresholds)
 
