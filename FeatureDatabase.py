@@ -77,24 +77,31 @@ class FeatureDatabase:
                      "training_image": training_image,
                      "query_image": self.DatabaseRecord(image_name, key_points, descriptors, query_image)}
 
-            homography, mask = self.get_train_to_query_homography(match)
-            match["homography"] = homography
+            affine, mask = self.get_train_to_query_affine(match)
+            match["affine"] = affine
             topLeft, topRight, bottomLeft, bottomRight = self.calculate_bounding_box(match)
-            match["top_left"] = topLeft
-            match["top_right"] = topRight
-            match["bottom_left"] = bottomLeft
-            match["bottom_right"] = bottomRight
+
+            # Handle rotations by choosing the minimums and maximums of the bounding box.
+            match["top_left"] = (min(topLeft[0], topRight[0], bottomLeft[0], bottomRight[0]),
+                                 min(topLeft[1], topRight[1], bottomLeft[1], bottomRight[1]))
+            match["top_right"] = (max(topLeft[0], topRight[0], bottomLeft[0], bottomRight[0]),
+                                  min(topLeft[1], topRight[1], bottomLeft[1], bottomRight[1]))
+            match["bottom_left"] = (min(topLeft[0], topRight[0], bottomLeft[0], bottomRight[0]),
+                                    max(topLeft[1], topRight[1], bottomLeft[1], bottomRight[1]))
+            match["bottom_right"] = (max(topLeft[0], topRight[0], bottomLeft[0], bottomRight[0]),
+                                     max(topLeft[1], topRight[1], bottomLeft[1], bottomRight[1]))
+
             imageMatches.append(match)
 
         imageMatches = sorted(imageMatches, key=lambda match: match["error"])
 
         return imageMatches
 
-    def get_train_to_query_homography(self, match: dict) -> tuple:
+    def get_train_to_query_affine(self, match: dict) -> tuple:
         """
-        Calculates the homography which maps the points in the training image onto the query image.
+        Calculates the affine transformation which maps the points in the training image onto the query image.
 
-        :return: the homography
+        :return: the affine transformation
         """
         # Counter-intuitive that we are using the trainIdx for the query points and vice versa, but this is in fact
         # correct. It's just a naming thing: we are calling the emoji the training images and the test images the query
@@ -102,19 +109,19 @@ class FeatureDatabase:
         query_key_points = np.array([match["query_image"].key_points[m.trainIdx].pt for m in match["matches"][:self.POINT_MATCH_COUNT]])
         train_key_points = np.array([match["training_image"].key_points[m.queryIdx].pt for m in match["matches"][:self.POINT_MATCH_COUNT]])
 
-        return cv.findHomography(train_key_points, query_key_points, cv.RANSAC, 1)
+        return cv.estimateAffinePartial2D(train_key_points, query_key_points)
 
     def calculate_bounding_box(self, match: dict):
         """
-        Calculates the bounding box for a match using its homography.
+        Calculates the bounding box for a match using its affine transformation.
 
         :param match: the match to get the bounding box of.
         :return: the vertices of the bounding box.
         """
-        topLeft = cv.perspectiveTransform(np.float32([0, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
-        topRight = cv.perspectiveTransform(np.float32([511, 0]).reshape(-1, 1, 2), match["homography"])[0][0]
-        bottomLeft = cv.perspectiveTransform(np.float32([0, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
-        bottomRight = cv.perspectiveTransform(np.float32([511, 511]).reshape(-1, 1, 2), match["homography"])[0][0]
+        topLeft = cv.transform(np.float32([0, 0]).reshape(-1, 1, 2), match["affine"])[0][0]
+        topRight = cv.transform(np.float32([511, 0]).reshape(-1, 1, 2), match["affine"])[0][0]
+        bottomLeft = cv.transform(np.float32([0, 511]).reshape(-1, 1, 2), match["affine"])[0][0]
+        bottomRight = cv.transform(np.float32([511, 511]).reshape(-1, 1, 2), match["affine"])[0][0]
 
         topLeft = tuple(map(round, topLeft))
         topRight = tuple(map(round, topRight))
