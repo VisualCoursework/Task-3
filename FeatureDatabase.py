@@ -161,7 +161,6 @@ class FeatureDatabase:
 
                 points = list(map(lambda x: [float(x[0]), float(x[1])], [match["top_left"], match["top_right"], match["bottom_right"], match["bottom_left"]]))
                 points = np.array(points, dtype=np.int32)
-                print(points)
 
                 image = cv.polylines(image, [points], True, (0, 0, 0), 2)
                 cv.putText(image, match["training_image"].ID, (match["top_left"][0], match["top_left"][1] - 3) , cv.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)

@@ -36,9 +36,17 @@ if __name__ == "__main__":
         # Calculate the annotation for the image based on the training data
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
+        db.show_boxes_around_images([(image, name)])
+
         print(f"No rotation: {name}")
-        print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+        # A bit awkward, but we need to pass in a list of annotations to evaluate_annotations, so we wrap the last
+        # element in a list.
+        print(utils.evaluate_annotations([predicted_annotations[-1]], [actual_annotations[-1]], 0.5))
         print()
+
+    print("All rotations:")
+    print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+    print()
 
     # Next perform analysis of the rotated test images.
     for image, name in testImagesWithRotations:
@@ -49,25 +57,38 @@ if __name__ == "__main__":
         # Calculate the annotation for the image based on the training data
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
+        db.show_boxes_around_images([(image, name)])
+
         print(f"With rotation: {name}")
-        print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+        # A bit awkward, but we need to pass in a list of annotations to evaluate_annotations, so we wrap the last
+        # element in a list.
+        print(utils.evaluate_annotations([predicted_annotations[-1]], [actual_annotations[-1]], 0.5))
         print()
 
-    # Now create a matplotlib plot of the results by varying the IoU threshold.
+    print("Overall:")
+    print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+
+    # Now plot the accuracy, recall and precision against the IoU threshold.
+    accuracy = []
+    precision = []
     recalls = []
     thresholds = []
 
     for threshold_factor in [0.01 * x for x in range(1, 101)]:
+        accuracy.append(utils.evaluate_annotations(predicted_annotations, actual_annotations, threshold_factor)["ACC"])
         recalls.append(utils.evaluate_annotations(predicted_annotations, actual_annotations, threshold_factor)["recall"])
+        precision.append(utils.evaluate_annotations(predicted_annotations, actual_annotations, threshold_factor)["precision"])
+
         thresholds.append(threshold_factor)
 
-    # Plot recall vs threshold:
-    plt.plot(thresholds, recalls)
+    # Plot accuracy, recall and precision vs threshold:
+    plt.plot(thresholds, accuracy, label="Accuracy")
+    plt.plot(thresholds, recalls, label="Recall")
+    plt.plot(thresholds, precision, label="Precision")
     plt.xlabel("IoU Threshold")
-    plt.ylabel("Recall")
-    plt.title("Recall vs IoU Threshold")
+    plt.ylabel("Accuracy / Recall / Precision")
+    plt.legend()
     plt.show()
 
-    print(recalls)
-    print(thresholds)
+
 
