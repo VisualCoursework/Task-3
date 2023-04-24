@@ -27,7 +27,7 @@ if __name__ == "__main__":
     predicted_annotations = []
     actual_annotations = []
 
-    # Now perform analysis of the test images.
+    # Now perform analysis of the non-rotated test images.
     for image, name in testImagesNoRotation:
         # Read in the annotation for this test image
         with open(f"TestWithoutRotations/annotations/{name}.txt") as f:
@@ -36,12 +36,29 @@ if __name__ == "__main__":
         # Calculate the annotation for the image based on the training data
         predicted_annotations.append(db.get_annotation_for_image(image, name))
 
+        print(f"No rotation: {name}")
+        print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+        print()
+
+    # Next perform analysis of the rotated test images.
+    for image, name in testImagesWithRotations:
+        # Read in the annotation for this test image
+        with open(f"Task3AdditionalTestDataset/annotations/{name}.csv") as f:
+            actual_annotations.append(f.read())
+
+        # Calculate the annotation for the image based on the training data
+        predicted_annotations.append(db.get_annotation_for_image(image, name))
+
+        print(f"With rotation: {name}")
+        print(utils.evaluate_annotations(predicted_annotations, actual_annotations, 0.5))
+        print()
+
     # Now create a matplotlib plot of the results by varying the IoU threshold.
     recalls = []
     thresholds = []
 
     for threshold_factor in [0.01 * x for x in range(1, 101)]:
-        recalls.append(utils.evaluate_annotation(predicted_annotations, actual_annotations, threshold_factor)["recall"])
+        recalls.append(utils.evaluate_annotations(predicted_annotations, actual_annotations, threshold_factor)["recall"])
         thresholds.append(threshold_factor)
 
     # Plot recall vs threshold:

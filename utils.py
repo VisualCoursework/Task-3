@@ -73,7 +73,7 @@ def evaluate_single_annotation(predicted: str, actual: str, IoU_threshold: float
     return FPR, TPR, FNR, TNR
 
 
-def evaluate_annotation(predicted: list[str], actual: list[str], IoU_threshold: float) -> dict:
+def evaluate_annotations(predicted: list[str], actual: list[str], IoU_threshold: float) -> dict:
     """
     Creates an evaluation dictionary for the two given annotations.
 
