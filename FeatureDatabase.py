@@ -1,4 +1,3 @@
-import math
 from typing import List, Tuple
 from numpy import ndarray
 import numpy as np
